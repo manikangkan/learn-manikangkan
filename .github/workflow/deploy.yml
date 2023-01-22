@@ -1,0 +1,52 @@
+name: Deploy to Netlify
+on:
+  pull_request:
+    branches:
+      - dev
+  push:
+    branches:
+      - dev
+      - master
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Deploy to Netlify (Preview)
+        if: github.event_name == 'pull_request'
+        uses: nwtgck/actions-netlify@v1
+        with:
+          netlify-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          site-id: ${{ secrets.NETLIFY_SITE_ID }}
+          dir: build
+          context: pr-${{github.event.number}}
+      - name: Deploy to Netlify (Dev)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        uses: nwtgck/actions-netlify@v1
+        with:
+          netlify-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          site-id: ${{ secrets.NETLIFY_SITE_ID }}
+          dir: build
+          context: dev
+      - name: Deploy to Netlify (Production)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: nwtgck/actions-netlify@v1
+        with:
+          netlify-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          site-id: ${{ secrets.NETLIFY_SITE_ID }}
+          dir: build
+          context: production
+      - name: Pre-commit Hooks
+        uses: lukechilds/gh-action-husky@v2
+        with:
+          command: "pre-commit"
+      - name: TypeScript and Prettier
+        run: npx tsc && npx prettier --check 'src/**/*.{ts,tsx}'
