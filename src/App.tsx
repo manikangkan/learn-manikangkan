@@ -7,10 +7,7 @@ const encode = (data: any) => {
 };
 
 class App extends React.Component {
-  constructor(props: any) {
-    super(props);
-    this.state = { name: "", email: "", message: "" };
-  }
+  state = { name: "", email: "", message: "" };
 
   /* Here’s the juicy bit for posting the form submission */
 
